@@ -33,16 +33,29 @@ def ev_strategy(time_step : int, temperature_data : np.ndarray, renewable_share 
     """
 
     # Example 1: charge as fast as technically possible
-    ev.consumption[time_step] = ev.max
+    "ev.consumption[time_step] = ev.max"
 
     # Example 2: try to reach max state of charge during the session. Divide the load over the available time
-    """
+
     session_nr = int(ev.session[time_step])
     required_energy = ev.size  # always charge to 100% SoC
     energy_to_charge = max(0, required_energy - ev.energy)  # in kWh
     time_to_charge = (ev.session_leave[session_nr] - time_step) * TIME_STEP_SECONDS / 3600  # in hours
-    ev.consumption[time_step] = min(ev.power_max, energy_to_charge / time_to_charge)
-    """
+    if renewable_share[time_step] > 0.3 and energy_to_charge != 0:
+        ev.consumption[time_step] = min(ev.power_max,energy_to_charge)
+        if ev.consumption[time_step] < 0:
+            ev.consumption[time_step] = 0
+    elif energy_to_charge != 0:
+        ev.consumption[time_step] = min(ev.power_max, energy_to_charge / time_to_charge)
+        if ev.consumption[time_step] < 0:
+            ev.consumption[time_step] = 0
+    else:
+        ev.consumption[time_step] = ev.min
+        if ev.consumption[time_step] < 0:
+            ev.consumption[time_step] = 0
+    if ev.id == 63:
+        print(f"energy_to_charge: {energy_to_charge}, time_to_charge: {time_to_charge}, ev.consumption[time_step]: {ev.consumption[time_step]}")
+
 
 def hp_strategy(time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray, hp : Heatpump):
     """
@@ -87,7 +100,13 @@ def batt_strategy(time_step : int, temperature_data : np.ndarray, renewable_shar
     Do this by setting a value for batt.consumption[time_step]
     This value cam be smaller (discharging) or greater (charging) than 0
     """
-
+    """"
+    if renewable_share[time_step] > 0.2 & batt.energy < 12.5:
+        batt.consumption[time_step] = batt.power_max[time_step]
+        return
+    else if 
+        batt.consumption[time_step] = batt.power_max[time_step]
+    """
     # Example: do nothing, determine the consumption of the battery in the house strategy
     pass
 
