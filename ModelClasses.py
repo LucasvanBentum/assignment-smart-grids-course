@@ -233,8 +233,8 @@ class Heatpump(Asset):
 
         # Building properties, You can change and use this
         self.T_set = 20.0 + 273  # [K] set point temperature in the house
-        self.T_min = 18.0 + 273  # [K] Min temperature in the house
-        self.T_max = 21.0 + 273  # [K] Max temperature in the house
+        self.T_min = 16.0 + 273  # [K] Min temperature in the house
+        self.T_max = 25.0 + 273  # [K] Max temperature in the house
         self.nominal_power = 8000.0  # [W]       Nominal capacity of heat pump installation
         self.tank_mass = 120.0  # [kg]      Mass of buffer = Volume of buffer (Water)
         self.tank_T_min_limit = 25.0 + 273 # [K]   Min temperature in the buffer tank

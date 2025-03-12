@@ -50,11 +50,7 @@ def ev_strategy(time_step : int, temperature_data : np.ndarray, renewable_share 
         if ev.consumption[time_step] < 0:
             ev.consumption[time_step] = 0
     else:
-        ev.consumption[time_step] = ev.min
-        if ev.consumption[time_step] < 0:
-            ev.consumption[time_step] = 0
-    if ev.id == 63:
-        print(f"energy_to_charge: {energy_to_charge}, time_to_charge: {time_to_charge}, ev.consumption[time_step]: {ev.consumption[time_step]}")
+        ev.consumption[time_step] = 0
 
 
 def hp_strategy(time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray, hp : Heatpump):
@@ -74,6 +70,12 @@ def hp_strategy(time_step : int, temperature_data : np.ndarray, renewable_share 
     # temperature does not reach below its set point
     # All these calculations are in SI units, that is: Kelvin, Joule, and seconds
     T_ambient = temperature_data[time_step]
+    if T_ambient < 18+273:
+        hp.T_set = 18+273
+    elif T_ambient > 25+273:
+        hp.T_set = 25+273
+    else:
+        hp.T_set = 20+273
 
     # Calculate the amount of heat needed to keep the house temperature constant at the set point
     heat_demand_house = hp.calculate_heat_demand_house(time_step, hp.T_set)
@@ -81,17 +83,24 @@ def hp_strategy(time_step : int, temperature_data : np.ndarray, renewable_share 
     # Calculate whether the tank temperature will reach below its set point if the house is heated
     tank_T_difference_no_hp = heat_demand_house / (hp.tank_mass * hp.heat_capacity_water)
     tank_T_no_hp = hp.tank_T - tank_T_difference_no_hp
-
-    if tank_T_no_hp > hp.tank_T_set:
+    if renewable_share[time_step] > 0.3 and heat_demand_house > 0:
+        hp.consumption[time_step] = hp.max
+    elif tank_T_no_hp > hp.tank_T_set:
         heat_power_to_tank = 0.0  # No heat needed for the tank
+        power = heat_power_to_tank / hp.cop(hp.tank_T_set, T_ambient)
+        hp.consumption[time_step] = power / 1000.0  # convert to kW
     else:
         # supply up to set point if possible
         heat_to_tank = hp.tank_mass * hp.heat_capacity_water * (hp.tank_T_set - tank_T_no_hp) + heat_demand_house
         heat_power_to_tank = min(hp.nominal_power, heat_to_tank / TIME_STEP_SECONDS)
-
+        power = heat_power_to_tank / hp.cop(hp.tank_T_set, T_ambient)
+        hp.consumption[time_step] = power / 1000.0  # convert to kW
+    """print(f"temperature house = {hp.temperatures[1]}, min temperature  = {hp.T_min},"
+          f" sustainable ratio  = {renewable_share[time_step]}, hp.consumption{hp.consumption[time_step]}"
+          f" hp.T_set = {hp.T_set}, hp.tank_T = {hp.tank_T}, hp.tank_T_set = {hp.tank_T_set}, "
+          f"heat_demand_house = {heat_demand_house}, tank_T_difference_no_hp = {tank_T_difference_no_hp}, ")"""
     # Convert the heating power to electrical power using the Coefficient of Performance
-    power = heat_power_to_tank / hp.cop(hp.tank_T_set, T_ambient)
-    hp.consumption[time_step] = power / 1000.0  # convert to kW
+
 
 def batt_strategy(time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray, batt : Battery):
     """
