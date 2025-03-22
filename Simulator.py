@@ -34,6 +34,7 @@ class Simulator:
         self.house_strategy = house_strategy
         self.neighborhood_strategy = neighborhood_strategy
         self.total_load : np.ndarray = np.array([])
+        self.pv_generated : np.ndarray = np.array([])
         self.control_order : List[StrategyOrder] = control_order
 
     def set_min_max_ders(self, time_step : int):
@@ -47,6 +48,7 @@ class Simulator:
         #Scenario Parameters
         np.random.seed(42) 
         self.total_load = np.zeros(sim_length)
+        self.pv_generated = np.zeros(sim_length)
     
         #Load pre-configured data
         if os.path.isfile(path_to_pkl_data): 
@@ -133,18 +135,20 @@ class Simulator:
 
     def response(self, time_step : int) -> float:
         total_load = 0
+        pv_generated = 0
         for house in self.list_of_houses:
             house.ev.response(time_step)
             house.hp.response(time_step)
             house.batt.response(time_step)
             house_load = (house.base_data[time_step] + house.pv.consumption[time_step] + house.ev.consumption[time_step] + house.batt.consumption[time_step] + house.hp.consumption[time_step])
             total_load += house_load
-        return total_load
+            pv_generated += abs(house.pv.consumption[time_step])
+        return total_load, pv_generated
 
     def do_time_step(self, time_step : int):
         self.set_min_max_ders(time_step)
         self.control_strategy(time_step)
-        self.total_load[time_step] = self.response(time_step)
+        self.total_load[time_step],self.pv_generated[time_step] = self.response(time_step)
 
     def start_simulation(self):
         for time_step in range(0, self.sim_length):

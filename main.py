@@ -110,7 +110,7 @@ def batt_strategy(time_step : int, temperature_data : np.ndarray, renewable_shar
     This value cam be smaller (discharging) or greater (charging) than 0
     """
     """"
-    if renewable_share[time_step] > 0.2 & batt.energy < 12.5:
+    if renewable_share[time_step] > 0.2 and batt.energy < 6.25:
         batt.consumption[time_step] = batt.power_max[time_step]
         return
     else if 
@@ -135,6 +135,9 @@ def house_strategy(time_step : int, temperature_data : np.ndarray, renewable_sha
     house_load = base_data[time_step] + pv.consumption[time_step] + ev.consumption[time_step] + hp.consumption[time_step]
     if house_load <= 0: # if the combined load is negative, charge the battery
         batt.consumption[time_step] = min(-house_load, batt.max)
+
+    elif renewable_share[time_step] > 0.2 and batt.energy < 8:
+        batt.consumption[time_step] = batt.power_max[time_step]
     else: # discharge the battery otherwise
         batt.consumption[time_step] = max(-house_load, batt.min)
 
@@ -182,7 +185,7 @@ def main():
     # Show Results
     vizualizer = Vizualizer(sim_length)
     vizualizer.plot_results_reference_and_total_load(simulator.reference_load, simulator.total_load)
-    vizualizer.print_metrics_renewable_share_total_load(simulator.ren_share, simulator.total_load)
+    vizualizer.print_metrics_renewable_share_total_load(simulator.ren_share, simulator.total_load, simulator.pv_generated)
 
 if __name__ == '__main__':
     exit(main())

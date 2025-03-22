@@ -50,7 +50,7 @@ class Vizualizer:
         plt.grid(True)
         plt.show()
 
-    def print_metrics_renewable_share_total_load(self, renewable_share : np.ndarray, total_load : np.ndarray):
+    def print_metrics_renewable_share_total_load(self, renewable_share : np.ndarray, total_load : np.ndarray, pv_generated : np.ndarray):
         """
         Calculates 3 metrics:
         - Total energy exported to the grid
@@ -68,9 +68,15 @@ class Vizualizer:
         energy_import = sum(total_load[total_load>0] * time_step_seconds/ 3600)
         renewable_import = sum(total_load[total_load > 0] * ren_share[total_load > 0]) * time_step_seconds/ 3600
         renewable_percentage = renewable_import/energy_import * 100
+        energy_pv_generated = sum(pv_generated* time_step_seconds/ 3600)
+        real_renewable_energy = sum(pv_generated* time_step_seconds/ 3600)+ renewable_import
+        real_renewable_percentage_used = (real_renewable_energy-energy_export)/energy_import * 100
 
         print("METRICS:")
         print("---------------------------------------")
         print(f"Energy Exported: {energy_export} kWh")
         print(f"Energy Imported: {energy_import} kWh")
         print(f"Share Renewable Energy Imported: {renewable_percentage} %")
+        print(f"Energy PV Generated: {energy_pv_generated} kWh")
+        print(f"Total Real Renewable Energy Used: {real_renewable_energy} kWh")
+        print(f"Share of Real Renewable Energy Used: {real_renewable_percentage_used} %")
