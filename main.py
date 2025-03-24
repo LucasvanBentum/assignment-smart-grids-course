@@ -137,9 +137,9 @@ def house_strategy(time_step : int, temperature_data : np.ndarray, renewable_sha
         batt.consumption[time_step] = min(-house_load, batt.max)
 
     elif renewable_share[time_step] > 0.2 and batt.energy < 8:
-        batt.consumption[time_step] = batt.power_max[time_step]
+        batt.consumption[time_step] = batt.max[time_step]
     else: # discharge the battery otherwise
-        batt.consumption[time_step] = max(-house_load, batt.min)
+        batt.consumption[time_step] = max(-house_load, batt.max)
 
 def neighborhood_strategy(time_step, temperature_data : np.ndarray, renewable_share : np.ndarray, baseloads : np.ndarray,
                           pvs : List[PVInstallation], evs : List[EVInstallation], hps : List[Heatpump], batteries : List[Battery]):
