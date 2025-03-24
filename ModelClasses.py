@@ -238,7 +238,7 @@ class Heatpump(Asset):
         self.nominal_power = 8000.0  # [W]       Nominal capacity of heat pump installation
         self.tank_mass = 120.0  # [kg]      Mass of buffer = Volume of buffer (Water)
         self.tank_T_min_limit = 25.0 + 273 # [K]   Min temperature in the buffer tank
-        self.tank_T_max_limit = 75.0 + 273  # [K]   Min temperature in the buffer tank
+        self.tank_T_max_limit = 75.0 + 273  # [K]   Max temperature in the buffer tank
         self.tank_T_set = 40.0 + 273  # [K]   Temperature setpoint in buffer tank
         self.tank_T_init = 40.0 + 273  # [K]   Initial temperature in buffer tank
         self.tank_T = self.tank_T_init # Parameter initialized with initial temperature but changes over time

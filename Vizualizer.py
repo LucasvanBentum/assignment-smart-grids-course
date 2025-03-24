@@ -3,6 +3,7 @@ import numpy as np
 
 import constants
 
+
 class Vizualizer:
 
     def __init__(self, sim_length) -> None:
@@ -58,6 +59,7 @@ class Vizualizer:
         - Percentage of imported energy to be from renewables
 
         Feel free to include more metrics if you want
+        - Percentage of total energy  from renewables
         """
 
         time_step_seconds = constants.TIME_STEP_SECONDS
@@ -68,9 +70,11 @@ class Vizualizer:
         energy_import = sum(total_load[total_load>0] * time_step_seconds/ 3600)
         renewable_import = sum(total_load[total_load > 0] * ren_share[total_load > 0]) * time_step_seconds/ 3600
         renewable_percentage = renewable_import/energy_import * 100
+        #total_renewable_percentage = (renewable_import + sum(pv_data) ) / sum(total_load) * 100
 
         print("METRICS:")
         print("---------------------------------------")
         print(f"Energy Exported: {energy_export} kWh")
         print(f"Energy Imported: {energy_import} kWh")
         print(f"Share Renewable Energy Imported: {renewable_percentage} %")
+        #print(f"Total Share Renewable Energy: {total_renewable_percentage} %")
