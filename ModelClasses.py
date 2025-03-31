@@ -14,7 +14,7 @@ class SimulationEntity:
         self.id = id
         self.strategy = strategy
 
-    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray):
+    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray,renewable_ratio : float):
         pass
 
 class Asset(SimulationEntity):
@@ -58,8 +58,8 @@ class House(SimulationEntity):
         self.batt = Battery(id, sim_length, batt_strategy)
         self.hp = Heatpump(id, sim_length, hp_data, temperature_data, hp_strategy)
 
-    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray):
-        return self.strategy(time_step, temperature_data, renewable_share, self.base_data, self.pv, self.ev, self.batt, self.hp)
+    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray,renewable_ratio : float):
+        return self.strategy(time_step, temperature_data, renewable_share, self.base_data, self.pv, self.ev, self.batt, self.hp,renewable_ratio)
 
 class PVInstallation(Asset):
     """
@@ -71,8 +71,8 @@ class PVInstallation(Asset):
         super().__init__(id, sim_length, pv_strategy)
         self.max_power = pv_data
 
-    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray):
-        return self.strategy(time_step, temperature_data, renewable_share, self)
+    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray,renewable_ratio : float):
+        return self.strategy(time_step, temperature_data, renewable_share, self,renewable_ratio)
 
     def response(self, time_step : int):
         # The PVInstallation does not need to update anything
@@ -113,8 +113,8 @@ class EVInstallation(Asset):
         self.session_arrive = ev_data['T_arrival'] #arrival times of session
         self.session_leave = ev_data['T_leave'] #leave times of session
 
-    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray):
-        return self.strategy(time_step, temperature_data, renewable_share, self)
+    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray,renewable_ratio : float):
+        return self.strategy(time_step, temperature_data, renewable_share, self,renewable_ratio)
     
     def response(self, time_step : int):
         if time_step != 0: #skip first timestep because you will look back one timestep
@@ -174,8 +174,8 @@ class Battery(Asset):
         self.energy = 6.25 #energy in kWh in de battery at every moment in time
         self.energy_history = np.zeros(sim_length)
 
-    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray):
-        return self.strategy(time_step, temperature_data, renewable_share, self)
+    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray,renewable_ratio : float):
+        return self.strategy(time_step, temperature_data, renewable_share, self,renewable_ratio)
     
     def response(self, time_step : int):
         self.energy_history[time_step] = self.energy #save batt SoC for later analysis
@@ -250,8 +250,8 @@ class Heatpump(Asset):
         """
         return 8.736555867367798 - 0.18997851 * (T_tank - T_out) + 0.00125921 * (T_tank - T_out) ** 2
     
-    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray):
-        return self.strategy(time_step, temperature_data, renewable_share, self)
+    def simulate_individual_entity(self, time_step : int, temperature_data : np.ndarray, renewable_share : np.ndarray, renewable_ratio:float):
+        return self.strategy(time_step, temperature_data, renewable_share, self,renewable_ratio)
     
     def response(self, time_step):
         """

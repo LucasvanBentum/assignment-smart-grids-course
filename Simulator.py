@@ -23,7 +23,7 @@ class Simulator:
     Please don't touch the parts related to the first two functionalities!
     """
     
-    def __init__(self, control_order, battery_strategy, hp_strategy, pv_strategy, ev_strategy, neighborhood_strategy, house_strategy):
+    def __init__(self, control_order, battery_strategy, hp_strategy, pv_strategy, ev_strategy, neighborhood_strategy, house_strategy, renewable_ratio):
         self.list_of_houses : List[House] = []
         self.ren_share : np.ndarray = np.array([])
         self.temperature_data : np.ndarray = np.array([])
@@ -36,6 +36,7 @@ class Simulator:
         self.total_load : np.ndarray = np.array([])
         self.pv_generated : np.ndarray = np.array([])
         self.control_order : List[StrategyOrder] = control_order
+        self.renewable_ratio : float
 
     def set_min_max_ders(self, time_step : int):
         for house in self.list_of_houses:
@@ -44,7 +45,7 @@ class Simulator:
             house.batt.set_min_max(time_step)
             house.hp.set_min_max(time_step)
 
-    def initialize(self, sim_length : int, number_of_houses : int, path_to_pkl_data : str, path_to_reference_data : str):
+    def initialize(self, sim_length : int, number_of_houses : int, path_to_pkl_data : str, path_to_reference_data : str,renewable_ratio : float):
         #Scenario Parameters
         np.random.seed(42) 
         self.total_load = np.zeros(sim_length)
@@ -65,6 +66,7 @@ class Simulator:
             hp_data = scenario_data['hp_data']
             temperature_data = hp_data["ambient_temp"][:, 0]
             ren_share = scenario_data['ren_share']
+            renewable_ratio = renewable_ratio
             #determine distribution of data
             distribution = np.arange(number_of_houses)
             np.random.shuffle(distribution)
@@ -87,6 +89,7 @@ class Simulator:
 
             self.list_of_houses : List[House] = list_of_houses
             self.ren_share = ren_share
+            self.renewable_ratio = renewable_ratio
             self.temperature_data = temperature_data
             self.hps = [house.hp for house in self.list_of_houses]
             self.evs = [house.ev for house in self.list_of_houses]
@@ -102,19 +105,19 @@ class Simulator:
         else:
             print(f"Path to reference data is invalid {path_to_reference_data}")
 
-    def individual_strategy(self, time_step : int):
+    def individual_strategy(self, time_step : int,):
         for house in self.list_of_houses:
-            house.pv.simulate_individual_entity(time_step, self.temperature_data, self.ren_share)
-            house.ev.simulate_individual_entity(time_step, self.temperature_data, self.ren_share)
-            house.hp.simulate_individual_entity(time_step, self.temperature_data, self.ren_share)
-            house.batt.simulate_individual_entity(time_step, self.temperature_data, self.ren_share)
+            house.pv.simulate_individual_entity(time_step, self.temperature_data, self.ren_share,self.renewable_ratio)
+            house.ev.simulate_individual_entity(time_step, self.temperature_data, self.ren_share,self.renewable_ratio)
+            house.hp.simulate_individual_entity(time_step, self.temperature_data, self.ren_share,self.renewable_ratio)
+            house.batt.simulate_individual_entity(time_step, self.temperature_data, self.ren_share,self.renewable_ratio)
 
     def household_strategy(self, time_step : int):
         for house in self.list_of_houses:
-            house.simulate_individual_entity(time_step, self.temperature_data, self.ren_share)
+            house.simulate_individual_entity(time_step, self.temperature_data, self.ren_share,self.renewable_ratio)
 
     def group_strategy(self, time_step : int):
-        self.neighborhood_strategy(time_step, self.temperature_data, self.ren_share, self.base_loads, self.pvs, self.evs, self.hps, self.batteries)
+        self.neighborhood_strategy(time_step, self.temperature_data, self.ren_share,self.renewable_ratio, self.base_loads, self.pvs, self.evs, self.hps, self.batteries)
 
     def control_strategy(self, time_step : int):
         try:  # catch errors caused by operations, probably caused by wrong strategy order
@@ -155,5 +158,5 @@ class Simulator:
             self.do_time_step(time_step)
 
             # print progress
-            if time_step % int(self.sim_length // 100) == 0:
-                print(f"Progress: {time_step / self.sim_length:.1%}")
+            #if time_step % int(self.sim_length // 100) == 0:
+                #print(f"Progress: {time_step / self.sim_length:.1%}")
